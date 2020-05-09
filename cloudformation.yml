@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Sets up the glue jobs and it's associated resources
+
+Parameters:
+  JobName:
+    Type: String
+    Default: ParquetFileCompactionGlueJob
+  GlueJobsSourceCodeS3Prefix:
+    Type: String
+    Default: "s3://glue-jobs/ParquetFileCompaction"
+
+Resources:
+  CompactionGlueJobExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CompactionGlueJobExecutionRole
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: 
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        # TODO: Tighten the permission set to allow only the specific resources accessed
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+  
+  ParquetFileCompactionGlueJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Description: Job to compact parquet files present in an S3 location
+      Command: 
+        Name: glueetl
+        PythonVersion: '3'
+        ScriptLocation: !Sub "${GlueJobsSourceCodeS3Prefix}/compact.py"
+      GlueVersion: '1.0'
+      # Enable us to kick-off at least 10 multiple runs of the job.
+      ExecutionProperty:
+        MaxConcurrentRuns: 10
+      DefaultArguments:
+        '--enable-s3-parquet-optimized-committer': true
+        '--enable-metrics': true
+        '--number_of_partitions': 1
+      MaxRetries: 0 # No retries on failures
+      Name: !Ref JobName
+      Role: !GetAtt CompactionGlueJobExecutionRole.Arn
+      Timeout: 240 # 4hrs
+      WorkerType: Standard
+      NumberOfWorkers: 5
