@@ -11,10 +11,10 @@ from awsglue.job import Job
 # so that '--input_path' will get resolved as 'input_path'
 # Refer: https://docs.amazonaws.cn/en_us/glue/latest/dg/aws-glue-api-crawler-pyspark-extensions-get-resolved-options.html
 args = getResolvedOptions(sys.argv, [
-    'JOB_NAME',
-    'input_path',
-    'output_path',
-    'number_of_partitions'
+	'JOB_NAME',
+	'input_path',
+	'output_path',
+	'number_of_partitions'
 ])
 
 glueContext = GlueContext(SparkContext.getOrCreate())
@@ -28,19 +28,19 @@ outputPath = args['output_path']
 numberOfPartitions = int(args.get('number_of_partitions', 1))
 
 input_dyf = glueContext.create_dynamic_frame_from_options("s3", {
-        "paths": [ inputPath ],
-        "recurse": True,
-        "groupFiles": "inPartition"
-    },
-    format = "parquet"
+		"paths": [ inputPath ],
+		"recurse": True,
+		"groupFiles": "inPartition"
+	},
+	format = "parquet"
 )
 
 repartitionedDYF = input_dyf.repartition(numberOfPartitions)
 glueContext.write_dynamic_frame.from_options(
-    frame = repartitionedDYF,
-    connection_type = "s3",
-    connection_options = {"path": outputPath},
-    format = "glueparquet"
+	frame = repartitionedDYF,
+	connection_type = "s3",
+	connection_options = {"path": outputPath},
+	format = "glueparquet"
 )
 
 job.commit()

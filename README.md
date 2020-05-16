@@ -1,5 +1,5 @@
 # ParquetFileCompaction
-Compacts parquet files present in an S3 location using AWS Glue job
+Compacts parquet files present in an S3 location using AWS Glue job. This repo is part of the medium post that I made [here](https://medium.com/@vadivel_43566/compact-parquet-files-using-aws-glue-efcfc9a19564).
 
 # Setup
 After cloning the repo, run the below.
